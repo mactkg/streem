@@ -22,6 +22,7 @@
 #define STRM_NG 1
 
 extern int strm_option_verbose;
+extern FILE *fp;
 
 /* ----- Values */
 #define STRM_MAKE_TAG(n) ((uint64_t)(0xFFF0|(n)) << 48)

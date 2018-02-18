@@ -35,6 +35,7 @@ strm_task_new(strm_callback func, strm_value data)
 void
 strm_task_add(strm_stream* strm, struct strm_task* task)
 {
+  fprintf(fp, "{\"ev\": \"pushed_task\", \"mode\": %d, \"strm_id\": \"%p\", \"task_id\": \"%p\"}\n", strm->mode, strm, task);
   strm_queue_add(strm->queue, task);
   if (strm->mode == strm_producer) {
     strm_queue_add(prod_queue, strm);
@@ -155,10 +156,20 @@ task_exec(strm_stream* strm, struct strm_task* task)
   }
 }
 
+static int
+get_thread_index(pthread_t *thread) {
+  for (int i=0; i<worker_max; i++) {
+    if(workers[i].th == thread)
+      return i;
+  }
+  return -1; 
+}
+
 static void*
 task_loop(void *data)
 {
   strm_stream* strm;
+  pthread_t thread = pthread_self();
 
   for (;;) {
     strm = strm_queue_get(queue);
@@ -170,6 +181,7 @@ task_loop(void *data)
         struct strm_task* t;
 
         while ((t = strm_queue_get(strm->queue)) != NULL) {
+          fprintf(fp, "{\"ev\": \"exec_task\", \"thread_id\": %d, \"thread_pointer\": \"%p\", \"mode\": %d, \"strm_id\": \"%p\", \"task_id\": \"%p\"}\n", get_thread_index(thread), thread, strm->mode, strm, t);
           task_exec(strm, t);
         }
         strm_atomic_cas(strm->excl, 1, 0);
@@ -198,6 +210,7 @@ task_init()
   workers = malloc(sizeof(struct strm_worker)*worker_max);
   for (i=0; i<worker_max; i++) {
     pthread_create(&workers[i].th, NULL, task_loop, &workers[i]);
+    fprintf(fp, "{\"ev\": \"create_thread\", \"thread_id\": %d, \"thread_pointer\": \"%p\"}\n", i, workers[i].th);
   }
 }
 
@@ -235,6 +248,7 @@ strm_stream_new(strm_stream_mode mode, strm_callback start_func, strm_callback c
   s->queue = strm_queue_new();
   strm_atomic_inc(stream_count);
 
+  fprintf(fp, "{\"ev\": \"create_new_stream\", \"mode\": %d, \"strm_id\": \"%p\"}\n", mode, s);
   return s;
 }
 

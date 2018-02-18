@@ -2,6 +2,8 @@
 #include "node.h"
 #include <stdio.h>
 
+FILE *fp;
+
 static void
 fprint_str(node_string str, FILE *f)
 {
@@ -266,7 +268,12 @@ main(int argc, const char**argv)
   const char *e_prog = NULL;
   int i, n = 0, verbose = FALSE, check = FALSE;
   parser_state state;
-
+  
+  if ((fp = fopen("ld-json.json", "w")) == NULL) {
+    fprintf(stderr, "%sのオープンに失敗しました.\n", "ld-json.json");
+    exit(EXIT_FAILURE);
+  }
+  
   while (argc > 1 && argv[1][0] == '-') {
     const char *s = argv[1]+1;
     while (*s) {
@@ -336,5 +343,6 @@ main(int argc, const char**argv)
     puts("Syntax NG");
   }
   node_parse_free(&state);
+  fclose(fp);
   return n > 0 ? EXIT_FAILURE : EXIT_SUCCESS;
 }

@@ -92,6 +92,7 @@ io_loop(void* d)
     if (n < 0) {
       return NULL;
     }
+    fprintf(stderr, "input, %d", n);
     for (i=0; i<n; i++) {
       io_task_add(events[i].data.ptr);
     }
